@@ -19,19 +19,14 @@ local function find_occurrences(str, pattern)
       if not foundPos then
         return nil
       end
-      local before_char = foundPos > 1 and str:sub(foundPos - 1, foundPos - 1) or ''
-      local after_char = foundPos + pattern_len <= #str
-          and str:sub(foundPos + pattern_len, foundPos + pattern_len)
-        or ''
+      local before_char = str:sub(foundPos - 1, foundPos - 1)
+      local after_char = str:sub(foundPos + pattern_len, foundPos + pattern_len)
+      startPos = foundPos + 1
       if
         (before_char == '' or before_char:match('[^%w_]'))
         and (after_char == '' or after_char:match('[^%w_]'))
       then
-        local utf_pos = vim.str_utfindex(str, foundPos - 1)
-        startPos = foundPos + 1
-        return utf8_positions[utf_pos + 1] - 1 -- Return byte position as screen column (Lua indexing starts from 1)
-      else
-        startPos = foundPos + 1
+        return utf8_positions[foundPos] - 1 -- Return byte position as screen column (Lua indexing starts from 1)
       end
     end
   end
@@ -54,7 +49,14 @@ return {
           return false
         end
         cache.cword = expand('<cword>')
-        if not cache.cword:find('[%w%z\192-\255]') then
+        local cursor_pos = api.nvim_win_get_cursor(winid)
+        if
+          not cache.cword:find('[%w%z\192-\255]')
+          or not ffi
+            .string(ml_get(cursor_pos[1]))
+            :sub(cursor_pos[2] + 1, cursor_pos[2] + 1)
+            :match('[%w_]')
+        then
           cache.cword = nil
           return false
         end
