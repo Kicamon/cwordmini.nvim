@@ -26,7 +26,8 @@ local function find_occurrences(str, pattern)
         (before_char == '' or before_char:match('[^%w_]'))
         and (after_char == '' or after_char:match('[^%w_]'))
       then
-        return utf8_positions[foundPos] - 1 -- Return byte position as screen column (Lua indexing starts from 1)
+        local utf_pos = vim.str_utfindex(str, startPos - 1)
+        return utf8_positions[utf_pos] - 1 -- Return byte position as screen column (Lua indexing starts from 1)
       end
     end
   end
